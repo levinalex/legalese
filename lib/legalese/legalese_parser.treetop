@@ -1,0 +1,70 @@
+grammar LegaleseGrammar
+  rule document
+    (block_element)* {
+      def content
+        elements.map{ |e| e.content }.compact
+      end
+    }
+  end
+  
+  rule section
+    marker:section_marker blocks:(!section data:block_element)* {
+      def content
+        [:section, { :name => marker.name }, blocks.elements.map { |e| e.data.content }]
+      end
+    }
+  end
+  
+  rule section_marker
+    "§" number newlines {
+      def name
+        number.text_value.to_i
+      end
+    }
+  end
+  
+  rule paragraph
+    marker:paragraph_marker blocks:(!paragraph !section data:block_element)* {
+      def content
+        [:para, { :name => marker.name }, blocks.elements.map { |e| e.data.content }]
+      end
+    }
+  end
+  
+  rule paragraph_marker
+    "(" number ")" newlines {
+      def name
+        number.text_value.to_i
+      end
+    }
+  end
+
+  rule text_block
+    (!blank_lines .)+ newlines* {
+      def content
+        [:text_block, text_value.strip]
+      end
+    }
+  end
+  
+  rule newlines
+    "\n"+
+  end
+  
+  rule blank_lines
+    "\n" "\n"+ {
+      def content
+        nil
+      end
+    }
+  end
+  
+  rule block_element
+    section / paragraph / text_block / blank_lines
+  end
+  
+  rule number
+    [0-9]+
+  end
+
+end
